@@ -6,6 +6,7 @@ import TodoistApiTokenModal from "./modals/enterToken/enterTokenModal";
 import { getCurrentPageMdLink } from "./utils";
 import CreateTaskModal from "./modals/createTask/createTaskModal";
 import QueryInjector from "./queryInjector";
+import CompletedQueryInjector from "./completedQueryInjector"
 import { getTokenPath } from "./token";
 
 export default class TodoistPlugin extends Plugin {
@@ -14,6 +15,7 @@ export default class TodoistPlugin extends Plugin {
   private api: TodoistApi;
 
   private readonly queryInjector: QueryInjector;
+  private readonly completedQueryInjector: CompletedQueryInjector;
 
   constructor(app: App, pluginManifest: PluginManifest) {
     super(app, pluginManifest);
@@ -31,9 +33,14 @@ export default class TodoistPlugin extends Plugin {
     });
 
     this.queryInjector = new QueryInjector(app);
+    this.completedQueryInjector = new CompletedQueryInjector(app)
   }
 
   async onload() {
+    this.registerMarkdownCodeBlockProcessor("completedTasks",
+      this.completedQueryInjector.onNewBlock.bind(this.completedQueryInjector)
+    );
+
     this.registerMarkdownCodeBlockProcessor("todoist",
       this.queryInjector.onNewBlock.bind(this.queryInjector)
     );
@@ -101,6 +108,7 @@ export default class TodoistPlugin extends Plugin {
     }
 
     this.queryInjector.setApi(this.api);
+    this.completedQueryInjector.setApi(this.api);
 
     const result = await this.api.fetchMetadata();
 

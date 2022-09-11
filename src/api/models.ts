@@ -5,6 +5,7 @@ import {
   ISectionRaw,
   UnknownProject,
   UnknownSection,
+  CompletedITaskRaw
 } from "./raw_models";
 import type { ITodoistMetadata } from "./api";
 import { ExtendedMap } from "../utils";
@@ -39,21 +40,21 @@ export class Task {
     sameElse: "MMM Do",
   };
 
-  constructor(raw: ITaskRaw) {
-    this.id = raw.id;
-    this.priority = raw.priority;
-    this.content = raw.content;
-    this.order = raw.order;
-    this.projectID = raw.project_id;
-    this.sectionID = raw.section_id != 0 ? raw.section_id : null;
-    this.labelIDs = raw.label_ids;
+  constructor(raw?: ITaskRaw, completed?: CompletedITaskRaw) {
+    this.id = raw?.id ?? completed?.id
+    this.priority = raw?.priority ?? 0
+    this.content = raw?.content ?? completed?.content
+    this.order = raw?.order ?? 0
+    this.projectID = raw?.project_id ?? 0
+    this.sectionID = raw?.section_id != 0 ? raw?.section_id : null;
+    this.labelIDs = raw?.label_ids ?? []
 
     this.children = [];
 
-    if (raw.due) {
-      if (raw.due.datetime) {
+    if (raw?.due) {
+      if (raw?.due.datetime) {
         this.hasTime = true;
-        this.rawDatetime = moment(raw.due.datetime);
+        this.rawDatetime = moment(raw?.due.datetime);
         this.date = this.rawDatetime.calendar();
       } else {
         this.hasTime = false;
@@ -145,6 +146,15 @@ export class Task {
     }
 
     return this.order - other.order;
+  }
+
+  static buildCompletedTree(tasks: CompletedITaskRaw[]): Task[] {
+    const mapping = new Map<ID, Task>();
+    tasks.forEach((task) => { 
+      mapping.set(task.id, new Task(null, task))
+    });
+
+    return Array.from(mapping.values())
   }
 
   static buildTree(tasks: ITaskRaw[]): Task[] {

@@ -5,6 +5,7 @@ import type {
   IProjectRaw,
   ISectionRaw,
   ILabelRaw,
+  CompletedITaskRaw,
 } from "./raw_models";
 import { Task, Project, ID, ProjectID, SectionID, LabelID } from "./models";
 import { ExtendedMap } from "../utils";
@@ -86,6 +87,54 @@ export class TodoistApi {
       if (result.ok) {
         const tasks = (await result.json()) as ITaskRaw[];
         const tree = Task.buildTree(tasks);
+
+        debug({
+          msg: "Built task tree",
+          context: tree,
+        });
+
+        return Result.Ok(tree);
+      } else {
+        return Result.Err(new Error(await result.text()));
+      }
+    } catch (e) {
+      return Result.Err(e);
+    }
+  }
+
+  async getCompletedTasks(date: string): Promise<Result<Task[], Error>> {
+    let url = `https://api.todoist.com/sync/v8/completed/get_all?since=${date}`;
+
+    debug(url);
+
+    try {
+      const result = await fetch(url, {
+        headers: new Headers({
+          Authorization: `Bearer ${this.token}`,
+        }),
+      });
+
+      if (result.ok) {
+        // const tasks = (await result.json()) as CompletedITaskRaw[];
+        const tasks = (await result.json());
+        let test = tasks.items as CompletedITaskRaw[]
+        const today = new Date(date)
+
+        test = test.filter((task) => { 
+          let completedDate = new Date(task.completed_date)
+
+          if (
+            today.getFullYear() === completedDate.getFullYear() &&
+            today.getMonth() === completedDate.getMonth() &&
+            today.getDate() === completedDate.getDate()
+          ) {
+            return true
+          } else {
+            return false
+          }
+        });
+
+        const tree = Task.buildCompletedTree(test);
 
         debug({
           msg: "Built task tree",

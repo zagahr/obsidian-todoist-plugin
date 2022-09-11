@@ -11,7 +11,7 @@
   export let api: TodoistApi;
   export let sorting: string[];
   export let renderProject: boolean = true;
-  export let renderNoTaskInfo: boolean = true;
+  export let renderNoTaskInfo: boolean = false;
 
   let metadata: ITodoistMetadata = null;
   const metadataUnsub = api.metadata.subscribe((value) => (metadata = value));

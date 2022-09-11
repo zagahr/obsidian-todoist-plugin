@@ -30,6 +30,12 @@ export interface ITaskRaw {
   };
 }
 
+export interface CompletedITaskRaw {
+  id: ID;
+  completed_date: string;
+  content: string
+}
+
 export interface IProjectRaw {
   id: ProjectID;
   parent_id?: ProjectID;
